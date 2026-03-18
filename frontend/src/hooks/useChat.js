@@ -32,6 +32,7 @@ export function useChat() {
   const [title,         setTitle]         = useState("New Chat");
   const [messages,      setMessages]      = useState([]);
   const [codeContext,   setCodeContextState] = useState("");
+  const [explainMode,   setExplainMode]   = useState("intermediate");
   const [sending,       setSending]       = useState(false);
   const [bootstrapping, setBootstrapping] = useState(true);
   const [error,         setError]         = useState(null);
@@ -99,7 +100,7 @@ export function useChat() {
     setError(null);
 
     try {
-      const data = await apiSendMessage(sessionId, text.trim(), abortRef.current.signal);
+      const data = await apiSendMessage(sessionId, text.trim(), explainMode, abortRef.current.signal);
 
       // Replace optimistic user msg with confirmed messages from server
       setMessages((prev) => {
@@ -124,7 +125,7 @@ export function useChat() {
     } finally {
       setSending(false);
     }
-  }, [sessionId, messages.length]);
+  }, [sessionId, messages.length, explainMode]);
 
   // ── Update code context ─────────────────────────────────────────────────
   const setCodeContext = useCallback(async (code) => {
@@ -163,6 +164,8 @@ export function useChat() {
     title,
     messages,
     codeContext,
+    explainMode,
+    setExplainMode,
     sending,
     bootstrapping,
     error,

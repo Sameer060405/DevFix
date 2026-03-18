@@ -124,12 +124,16 @@ function buildMarkers(fixes, monaco) {
  *   improvedCode: string,
  * }>
  */
-export default function CodeEditorPanel({ language, value, onChange, fixes = [] }) {
+export default function CodeEditorPanel({ language, value, onChange, fixes = [], onEditorMount, wordWrap = false, minimap = true }) {
   const editorRef      = useRef(null);
   const monacoRef      = useRef(null);
   const decorationsRef = useRef(null);  // IDecorationsCollection — cleared on each update
   const actionsRef     = useRef(null);  // IDisposable from registerCodeActionProvider
   const fixesRef       = useRef(fixes); // keeps latest fixes readable inside closures
+
+  // Sync wordWrap / minimap dynamically without remounting
+  useEffect(() => { editorRef.current?.updateOptions({ wordWrap: wordWrap ? "on" : "off" }); }, [wordWrap]);
+  useEffect(() => { editorRef.current?.updateOptions({ minimap: { enabled: minimap } }); }, [minimap]);
 
   const monacoLang = LANG_MAP[language] ?? "javascript";
 
@@ -220,9 +224,8 @@ export default function CodeEditorPanel({ language, value, onChange, fixes = [] 
     editorRef.current = editor;
     monacoRef.current = monaco;
     ensureStyles();
+    onEditorMount?.(editor);
 
-    // Apply fixes that arrived before the editor mounted (e.g. switching files
-    // while an analysis result is already present)
     if (fixesRef.current.length > 0) {
       applyDiagnostics(editor, monaco, fixesRef.current);
     }

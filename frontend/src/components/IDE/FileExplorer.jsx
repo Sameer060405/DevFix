@@ -1,11 +1,11 @@
 import { useState } from "react";
 
-export default function FileExplorer({ tree, activeFile, onOpenFile }) {
+export default function FileExplorer({ tree, activeFile, onOpenFile, projectName = "Explorer" }) {
   return (
     <div className="w-56 shrink-0 bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden select-none">
       {/* Panel header */}
-      <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-gray-500 border-b border-gray-800">
-        Explorer
+      <div className="px-4 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-gray-500 border-b border-gray-800 truncate" title={projectName}>
+        {projectName}
       </div>
       {/* Tree */}
       <div className="flex-1 overflow-y-auto py-1">

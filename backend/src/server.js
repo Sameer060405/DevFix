@@ -14,6 +14,7 @@ import repoAnalyzeRouter from "./routes/repoAnalyze.js";
 import chatRouter        from "./routes/chat.js";
 import sessionsRouter    from "./routes/sessions.js";
 import analyticsRouter   from "./routes/analytics.js";
+import interviewRouter   from "./routes/interview.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -37,6 +38,7 @@ app.use("/api", repoAnalyzeRouter);
 app.use("/api", chatRouter);
 app.use("/api", sessionsRouter);
 app.use("/api/analytics", analyticsRouter);
+app.use("/api", interviewRouter);
 
 app.get("/health", (_req, res) => res.json({ status: "ok" }));
 

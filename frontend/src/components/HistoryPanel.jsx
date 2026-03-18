@@ -22,14 +22,11 @@ export default function HistoryPanel({ items, loading, error, onSelect, onClose 
       {/* Drawer */}
       <aside
         ref={panelRef}
-        className="
-          fixed right-0 top-0 h-full w-full max-w-sm z-30
-          bg-gray-900 border-l border-gray-800
-          flex flex-col shadow-2xl
-        "
+        className="fixed right-0 top-0 h-full w-full max-w-sm z-30 flex flex-col"
+        style={{ background: "rgba(7,9,26,0.95)", borderLeft: "1px solid rgba(255,255,255,0.07)", backdropFilter: "blur(20px)", boxShadow: "-24px 0 64px rgba(0,0,0,0.7)" }}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-800">
+        <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
           <div className="flex items-center gap-2">
             <ClockIcon />
             <h2 className="font-semibold text-sm text-gray-100">History</h2>
@@ -77,10 +74,10 @@ export default function HistoryPanel({ items, loading, error, onSelect, onClose 
             <button
               key={item._id}
               onClick={() => onSelect(item._id)}
-              className="
-                w-full text-left px-5 py-4 border-b border-gray-800
-                hover:bg-gray-800/60 transition-colors group
-              "
+              className="w-full text-left px-5 py-4 transition-all group"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(139,92,246,0.06)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
             >
               {/* Timestamp */}
               <p className="text-[10px] text-gray-600 mb-1.5 font-mono">

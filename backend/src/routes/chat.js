@@ -12,9 +12,54 @@ const groq   = new Groq({ apiKey: process.env.GROQ_API_KEY });
  */
 const MAX_HISTORY_MESSAGES = 20;
 
+// ─── Explain mode instructions ────────────────────────────────────────────────
+
+const EXPLAIN_MODE_INSTRUCTIONS = {
+  beginner: `
+## Explanation Mode: Beginner
+The user is new to programming or unfamiliar with this topic. Adapt ALL responses accordingly:
+- Use very simple language — avoid or define every technical term you use
+- Explain concepts through real-world analogies and everyday comparisons
+- Break down each step explicitly, never skip "obvious" steps
+- Use short sentences and simple structure
+- Avoid acronyms without spelling them out first
+- End complex explanations with a simple "In short: ..." summary`,
+
+  intermediate: `
+## Explanation Mode: Intermediate
+The user has working programming knowledge. Adapt responses accordingly:
+- Use standard technical terminology without over-explaining basics
+- Explain the logic and reasoning behind the code, not just what it does
+- Include practical examples where helpful
+- Point out common patterns or idioms being used
+- Mention edge cases or caveats worth knowing`,
+
+  senior: `
+## Explanation Mode: Senior Developer
+The user is an experienced engineer. Adapt responses with maximum technical depth:
+- Dive into architectural decisions and design patterns
+- Discuss trade-offs: time/space complexity, readability vs performance, coupling
+- Highlight edge cases, failure modes, and subtle bugs
+- Mention scalability and production concerns where relevant
+- Reference best practices, SOLID principles, or well-known patterns by name
+- Be concise — skip basics entirely, focus on depth and nuance`,
+
+  interview: `
+## Explanation Mode: Interview Prep
+The user is preparing for a technical interview. Structure ALL responses for interview success:
+- Lead with a concise, clear definition suitable for verbal delivery
+- Use bullet points to organize key concepts
+- Highlight what interviewers specifically look for on this topic
+- Include time/space complexity analysis where applicable
+- Close each response with 2–3 likely follow-up interview questions on the same topic
+- Keep answers thorough but structured — interviewers reward clarity and structure`,
+};
+
+const DEFAULT_MODE = "intermediate";
+
 // ─── System prompt factory ────────────────────────────────────────────────────
 
-function buildSystemPrompt(codeContext, userCtx = {}) {
+function buildSystemPrompt(codeContext, userCtx = {}, explainMode = DEFAULT_MODE) {
   const codeSection = codeContext?.trim()
     ? `\n\n## Code Context\nThe user has attached the following code for this session.\nRefer to it whenever relevant — treat it as the primary subject of discussion unless the user asks about something else.\n\n\`\`\`\n${codeContext.trim()}\n\`\`\``
     : "\n\n## Code Context\nNo code has been attached yet. If the user's question requires seeing code, ask them to paste it using the code context panel.";
@@ -41,6 +86,8 @@ function buildSystemPrompt(codeContext, userCtx = {}) {
       `Use it to give more relevant answers — do not mention it unless directly useful.\n\n${ctxParts.join("\n\n")}`
     : "";
 
+  const modeInstructions = EXPLAIN_MODE_INSTRUCTIONS[explainMode] ?? EXPLAIN_MODE_INSTRUCTIONS[DEFAULT_MODE];
+
   return `You are DevFix Assistant, an expert software engineer and patient coding mentor embedded in a debugging tool.
 Your job is to help the user understand, debug, and improve their code through natural conversation.
 
@@ -48,10 +95,8 @@ Your job is to help the user understand, debug, and improve their code through n
 - Answer coding questions with precision and clarity.
 - When referencing the user's code, cite specific line numbers, variable names, or function names.
 - For bugs: identify the root cause, then show a corrected snippet with inline comments.
-- Keep answers concise by default; expand only when the question needs depth.
 - If you don't have enough context to answer, ask a focused clarifying question.
-- Respond in plain English first; introduce technical terms with a brief definition.
-- Format code in fenced code blocks (\`\`\`) with the language identifier.${codeSection}${crossSessionSection}`;
+- Format code in fenced code blocks (\`\`\`) with the language identifier.${modeInstructions}${codeSection}${crossSessionSection}`;
 }
 
 // ─── Helper: derive a session title from the first user message ───────────────
@@ -138,11 +183,14 @@ router.patch("/chat/session/:sessionId/context", async (req, res) => {
  * Body: { message: string }
  */
 router.post("/chat/session/:sessionId/message", async (req, res) => {
-  const { message } = req.body ?? {};
+  const { message, explainMode } = req.body ?? {};
 
   if (!message || typeof message !== "string" || !message.trim()) {
     return res.status(400).json({ error: "Missing or empty message." });
   }
+
+  const validModes = Object.keys(EXPLAIN_MODE_INSTRUCTIONS);
+  const resolvedMode = validModes.includes(explainMode) ? explainMode : DEFAULT_MODE;
 
   // ── Load session + Redis context in parallel ────────────────────────────
   let session;
@@ -170,7 +218,7 @@ router.post("/chat/session/:sessionId/message", async (req, res) => {
   // ── Build LLM message history (rolling window) ──────────────────────────
   const recent = session.messages.slice(-MAX_HISTORY_MESSAGES);
   const llmMessages = [
-    { role: "system", content: buildSystemPrompt(session.codeContext, userCtx) },
+    { role: "system", content: buildSystemPrompt(session.codeContext, userCtx, resolvedMode) },
     ...recent.map((m) => ({ role: m.role, content: m.content })),
   ];
 

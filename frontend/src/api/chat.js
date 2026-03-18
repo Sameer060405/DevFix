@@ -47,10 +47,10 @@ export function updateContext(sessionId, codeContext) {
  * Sends a message and returns the assistant's reply.
  * Returns { reply, messageId, sessionId }
  */
-export function sendMessage(sessionId, message, signal) {
+export function sendMessage(sessionId, message, explainMode, signal) {
   return request(`/session/${sessionId}/message`, {
     method: "POST",
-    body: JSON.stringify({ message }),
+    body: JSON.stringify({ message, explainMode }),
     signal,
   });
 }

@@ -4,6 +4,7 @@ import { useChat } from "../hooks/useChat.js";
 export default function ChatPanel({ className }) {
   const {
     title, messages, codeContext,
+    explainMode, setExplainMode,
     sending, bootstrapping, error,
     send, setCodeContext, clearSession,
   } = useChat();
@@ -52,10 +53,10 @@ export default function ChatPanel({ className }) {
   const isEmpty = messages.length === 0 && !bootstrapping;
 
   return (
-    <div className={className ?? "flex flex-col h-[calc(100vh-12rem)] min-h-[500px] bg-gray-900 border border-gray-800 rounded-2xl overflow-hidden"}>
+    <div className={className ?? "flex flex-col h-[calc(100vh-12rem)] min-h-[500px] rounded-2xl overflow-hidden"} style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", backdropFilter: "blur(16px)", boxShadow: "0 4px 40px rgba(0,0,0,0.5)" }}>
 
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-800 shrink-0">
+      <div className="flex items-center gap-3 px-5 py-3.5 shrink-0" style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.02)" }}>
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <ChatBubbleIcon />
           <span className="font-semibold text-sm text-gray-100 truncate">
@@ -206,6 +207,26 @@ export default function ChatPanel({ className }) {
 
       {/* ── Input bar ────────────────────────────────────────────────────── */}
       <div className="shrink-0 border-t border-gray-800 p-3">
+        {/* Explain mode selector */}
+        <div className="flex items-center gap-2 mb-2.5 flex-wrap">
+          <span className="text-[10px] font-semibold text-gray-600 uppercase tracking-wider shrink-0">
+            Explain Mode:
+          </span>
+          {EXPLAIN_MODES.map((m) => (
+            <button
+              key={m.id}
+              onClick={() => setExplainMode(m.id)}
+              className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                explainMode === m.id
+                  ? `${m.activeClass} border-opacity-60`
+                  : "bg-transparent border-gray-800 text-gray-600 hover:text-gray-400 hover:border-gray-700"
+              }`}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+
         <div className="flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -395,6 +416,15 @@ function TypingIndicator() {
     </div>
   );
 }
+
+/* ─── Explain modes ──────────────────────────────────────────── */
+
+const EXPLAIN_MODES = [
+  { id: "beginner",     label: "Beginner",     activeClass: "bg-emerald-950/60 border-emerald-700/60 text-emerald-400" },
+  { id: "intermediate", label: "Intermediate", activeClass: "bg-indigo-950/60  border-indigo-700/60  text-indigo-400"  },
+  { id: "senior",       label: "Senior Dev",   activeClass: "bg-violet-950/60  border-violet-700/60  text-violet-400"  },
+  { id: "interview",    label: "Interview",    activeClass: "bg-amber-950/60   border-amber-700/60   text-amber-400"   },
+];
 
 /* ─── Suggestion prompts ─────────────────────────────────────── */
 
